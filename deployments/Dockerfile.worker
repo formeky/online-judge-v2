@@ -1,0 +1,15 @@
+FROM golang:1.21-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN go build -o /bin/worker ./cmd/worker
+
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ openjdk-17-jdk-headless python3 golang-go \
+    ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /bin/worker /worker
+COPY configs/ /configs/
+ENTRYPOINT ["/worker"]

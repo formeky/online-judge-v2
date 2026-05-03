@@ -1,0 +1,26 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "debug"
+
+database:
+  dsn: "oj:ojpasswd@tcp(127.0.0.1:3306)/oj?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open_conns: 50
+  max_idle_conns: 10
+
+rocketmq:
+  name_servers:
+    - "127.0.0.1:9876"
+  topic: "judge_submission"
+  consumer_group: "judge_worker_group"
+  retry: 2
+
+judge:
+  work_dir: "/tmp/oj-judge"
+  worker_concurrency: 4
+  compile_timeout: 30
+  cgroup_base: "/sys/fs/cgroup/oj"
+
+jwt:
+  secret: "change-me-in-production"
+  expire_hours: 24

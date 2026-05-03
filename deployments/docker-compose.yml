@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpasswd
+      MYSQL_DATABASE: oj
+      MYSQL_USER: oj
+      MYSQL_PASSWORD: ojpasswd
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "oj", "-pojpasswd"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  namesrv:
+    image: apache/rocketmq:5.1.4
+    command: sh mqnamesrv
+    ports:
+      - "9876:9876"
+    volumes:
+      - rocketmq_logs:/home/rocketmq/logs
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9876 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  broker:
+    image: apache/rocketmq:5.1.4
+    command: sh mqbroker -n namesrv:9876 autoCreateTopicEnable=true
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    volumes:
+      - rocketmq_store:/home/rocketmq/store
+      - rocketmq_logs:/home/rocketmq/logs
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m"
+    depends_on:
+      namesrv:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  rocketmq_logs:
+  rocketmq_store:
